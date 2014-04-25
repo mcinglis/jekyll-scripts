@@ -17,7 +17,6 @@
 
 import os
 import sys
-from collections import OrderedDict
 from datetime import datetime
 from argparse import ArgumentParser, ArgumentTypeError
 from subprocess import check_output, CalledProcessError, Popen, PIPE, DEVNULL

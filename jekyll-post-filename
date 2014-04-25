@@ -1,0 +1,75 @@
+#!/bin/env python3
+
+# Copyright (C) 2013  Malcolm Inglis <http://minglis.id.au/>
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+import sys
+from datetime import datetime
+from argparse import ArgumentParser, ArgumentTypeError
+from subprocess import check_output, CalledProcessError
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+    filename = jekyll_post_filename(args.title, args.date,
+                                    extension=args.extension)
+    print(filename)
+
+
+def parse_args(raw_args):
+    args = make_parser().parse_args(raw_args)
+    args.date = args.date or datetime.now().date()
+    return args
+
+
+def make_parser():
+    p = ArgumentParser(description='Prints the filename for a Jekyll post '
+                                   'with the given details.')
+    p.add_argument('title',
+                   help='The title of the post; this will be converted to the '
+                        'standard Jekyll format \'like-this\'.')
+    p.add_argument('-d', '--date', type=parse_date,
+                   help='The date of the post, in a format accepted by the '
+                        '`date` utlity. Default: today\'s date.')
+    p.add_argument('-x', '--extension', default='md',
+                   help='The file extension for the post. Default: `md`.')
+    return p
+
+
+def parse_date(s):
+    try:
+        ds = check_output(['date', '--date={}'.format(s),
+                                   '--iso-8601=date']).decode().strip()
+    except CalledProcessError:
+        raise ArgumentTypeError(('\'{}\' is an invalid date. It must be of a '
+                                 'form accepted by the `date` utility\'s '
+                                 '`--date` argument ').format(s))
+    return datetime.strptime(ds, '%Y-%m-%d').date()
+
+
+def jekyll_post_filename(title, date, extension='md'):
+    return '{date}-{ptitle}.{extension}'.format(date=date.isoformat(),
+                                                ptitle=title_for_path(title),
+                                                extension=extension)
+
+
+def title_for_path(title):
+    s = ''.join(c for c in title.lower() if c.isalnum() or c in ' -+_.')
+    return '-'.join(s.split())
+
+
+if __name__ == '__main__':
+    main()
+

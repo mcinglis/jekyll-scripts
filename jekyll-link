@@ -1,0 +1,77 @@
+#!/bin/env python3
+
+# Copyright (C) 2013  Malcolm Inglis <http://minglis.id.au/>
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+import sys
+from argparse import ArgumentParser
+from subprocess import check_output, CalledProcessError
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+    path = jekyll_link(url=args.url, title=args.title,
+                       category=args.category, output=args.output)
+    if path:
+        print(path)
+
+
+def parse_args(raw_args):
+    return make_parser().parse_args(raw_args)
+
+
+def make_parser():
+    p = ArgumentParser(description='Creates a Jekyll post in the links '
+                                   'category, with the given URL. This '
+                                   'depends on the `jekyll-post` and '
+                                   '`title-from-url` scripts.')
+    p.add_argument('url',
+                   help='The \'link\' attribute for the new post.')
+    p.add_argument('-t', '--title',
+                   help='The title for the new post. Default: derived from '
+                        'the linked HTML.')
+
+    g = p.add_mutually_exclusive_group()
+    g.add_argument('-c', '--category', default='links',
+                   help='The path of the category directory for the new post, '
+                        'such that it will be written into '
+                        '\'$JEKYLL_SITE_PATH/$category/_posts\'. '
+                        'Default: \'links\'.')
+    g.add_argument('-o', '--output',
+                   help='The path to write the new post to. Use \'-\' to '
+                        'write to standard out.')
+
+    return p
+
+
+def jekyll_link(url, title=None, category='links', output=None):
+    title = title or default_title(url)
+    try:
+        path = check_output((['jekyll-post', title,
+                                  '--attributes', "link:|{}".format(url)]
+                              + (['--output', output] if output else
+                                 ['--category', category]))).decode()[:-1]
+        return path
+    except CalledProcessError:
+        return ''
+
+
+def default_title(url):
+    return check_output(['title-from-url', url]).decode()[:-1]
+
+
+if __name__ == '__main__':
+    main()
+

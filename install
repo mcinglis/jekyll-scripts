@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+main() {
+    local dest="${1:-"$HOME/.local/bin"}"
+    if [ ! -d "$dest" ]; then
+	echo "'$dest' doesn't exist." >&2
+	exit 1
+    fi
+    for script in "jekyll-"* "title-from-url"; do
+	local path="$(readlink --canonicalize "$script")"
+	ln -s "$path" "$dest/$script"
+    done
+}
+
+main "$@"
+

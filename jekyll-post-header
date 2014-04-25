@@ -1,0 +1,82 @@
+#!/bin/env python3
+
+# Copyright (C) 2013  Malcolm Inglis <http://minglis.id.au/>
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+import sys
+from collections import OrderedDict
+from datetime import datetime
+from argparse import ArgumentParser, ArgumentTypeError
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+    for line in gen_header(args):
+        print(line)
+
+
+def parse_args(raw_args):
+    args = make_parser().parse_args(raw_args)
+    args.attributes = OrderedDict(args.attributes or [])
+    return args
+
+
+def make_parser():
+    parser = ArgumentParser(description='Prints the YAML header for a new '
+                                        'Jekyll post.')
+    parser.add_argument('attributes', nargs="*", metavar='attribute',
+                        type=parse_attribute,
+                        help='An attribute to put in the header, provided in '
+                             'a format like \'name:|value\' to denote string '
+                             'attributes that should be included as block '
+                             'literals, and \'name:value\' to denote attributes '
+                             'that should be included on the same line. Only '
+                             'the last value for an attribute will be used.')
+    parser.add_argument('-p', '--padding', type=int, default=10,
+                        help='The number of spaces to left-align the '
+                             'attributes by. Default: 10.')
+    return parser
+
+
+def parse_attribute(s):
+    if ':|' in s:
+        name, value = s.split(':|', maxsplit=1)
+        return (name, {'value': value, 'type': 'block'})
+    elif ':' in s:
+        name, value = s.split(':', maxsplit=1)
+        return (name, {'value': value, 'type': 'nonblock'})
+    else:
+        raise ArgumentTypeError('Attribute \'{}\' does not contain \':\', '
+                                'which separates the name and value.'
+                                .format(s))
+
+
+def gen_header(args, separator='---'):
+    yield separator
+    for name, d in args.attributes.items():
+        yield attr_line(args.padding, name, d['value'], d['type'])
+    yield separator
+
+
+def attr_line(padding, name, value, type_):
+    value = value.replace('\\n', '\n').replace('\\t', '\t')
+    fmt = ('{name} |\n  {value}' if type_ == 'block'
+      else '{name:<' + str(padding) + '} {value}')
+    return fmt.format(name=name + ':', value=value)
+
+
+if __name__ == '__main__':
+    main()
+

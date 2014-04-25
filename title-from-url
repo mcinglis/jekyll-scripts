@@ -1,0 +1,75 @@
+#!/bin/env python3
+
+# Copyright (C) 2013  Malcolm Inglis <http://minglis.id.au/>
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+import sys
+from argparse import ArgumentParser, ArgumentTypeError
+from urllib.parse import urlparse
+from urllib.request import urlopen
+from html.parser import HTMLParser
+from contextlib import closing
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+    title = title_from_url(args.url)
+    print(title)
+
+
+def parse_args(raw_args):
+    return make_parser().parse_args(raw_args)
+
+
+def make_parser():
+    parser = ArgumentParser(description='Opens the given URL of a HTML '
+                                        'document, and prints its title, if '
+                                        'any.')
+    parser.add_argument('url', help='The URL of the HTML document.')
+    return parser
+
+
+def title_from_url(url):
+    with closing(urlopen(url)) as response:
+        return extract_title(response.read().decode(errors='replace'))
+
+
+def extract_title(htmls):
+    parser = HTMLTitleExtractor()
+    parser.feed(htmls)
+    return parser.title
+
+
+class HTMLTitleExtractor(HTMLParser):
+    def __init__(self, *args, **kwargs):
+        self.in_title = False
+        self.title = ''
+        super().__init__(*args, **kwargs)
+
+    def handle_starttag(self, tag, attrs):
+        self.in_title = (tag == 'title')
+
+    def handle_endtag(self, tag):
+        if tag == 'title':
+            self.in_title = False
+
+    def handle_data(self, data):
+        if self.in_title:
+            self.title += data
+
+
+if __name__ == '__main__':
+    main()
+

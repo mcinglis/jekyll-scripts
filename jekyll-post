@@ -52,7 +52,8 @@ def make_parser():
     p = ArgumentParser(description='Creates a new Jekyll post, and prints its '
                                    'path to standard out.')
 
-    p.add_argument('title', help='The title for the new post.')
+    p.add_argument('title', type=escape_str,
+                   help='The title for the new post.')
 
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument('-c', '--category',
@@ -81,6 +82,10 @@ def make_parser():
                         'by. Default: 10.')
 
     return p
+
+
+def escape_str(s):
+    return s.replace('\'', '\\\'')
 
 
 def directory_exists(s):
@@ -145,9 +150,9 @@ def header_proc(args):
     # TODO: this won't raise an exception if the script fails. Is there a way to
     # check for errors, while still streaming the output?
     return Popen(['jekyll-post-header', '--padding', str(args.padding),
-                                        'layout:\'default\'',
-                                        'date:\'{}\''.format(args.date),
-                                        'title:|{}'.format(args.title)]
+                                        'layout:"default"',
+                                        'date:"{}"'.format(args.date),
+                                        'title:"{}"'.format(args.title)]
                                       + args.attributes,
                  stdout=PIPE, stderr=DEVNULL)
 

@@ -37,7 +37,7 @@ def make_parser():
                                    'category, with the given URL. This '
                                    'depends on the `jekyll-post` and '
                                    '`title-from-url` scripts.')
-    p.add_argument('url',
+    p.add_argument('url', type=escape_str,
                    help='The \'link\' attribute for the new post.')
     p.add_argument('-t', '--title',
                    help='The title for the new post. Default: derived from '
@@ -52,15 +52,18 @@ def make_parser():
     g.add_argument('-o', '--output',
                    help='The path to write the new post to. Use \'-\' to '
                         'write to standard out.')
-
     return p
+
+
+def escape_str(s):
+    return s.replace('\'', '\\\'')
 
 
 def jekyll_link(url, title=None, category='links', output=None):
     title = title or default_title(url)
     try:
         path = check_output((['jekyll-post', title,
-                                  '--attributes', "link:|{}".format(url)]
+                                  '--attributes', 'link:"{}"'.format(url)]
                               + (['--output', output] if output else
                                  ['--category', category]))).decode()[:-1]
         return path

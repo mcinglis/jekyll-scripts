@@ -1,16 +1,5 @@
 
-This is a collection of scripts for easily creating new [Jekyll](http://jekyllrb.com/) posts. I wrote them in Python (v3.3), because Python is pretty ubiquitous and has good-enough argument parsing. These scripts are modularized, so you can replace a script (using whatever language you like) to get the other scripts to do something different.
-
-
-## Installing
-
-``` sh
-jekyll-scripts $ ./install
-# Makes symbolic links to the scripts in `~/.local/bin`.
-```
-
-The `install` script takes an optional argument to specify the directory for the
-symbolic links, if you'd prefer to put them somewhere else.
+This is a collection of scripts for easily creating new [Jekyll](http://jekyllrb.com/) posts. I wrote them in Python (v3), because Python is pretty ubiquitous and has good-enough argument parsing. These scripts are modularized, so you can replace a script (using whatever language you like) to get the other scripts to do something different.
 
 
 ## `jekyll-post`
@@ -50,6 +39,16 @@ $ jekyll-link "https://example.org/example-url"
 `jekyll-link` is a wrapper around `jekyll-post`. It takes a URL, fetches it, and uses the contents of `<title>` tag for the title of the post, and makes a new post in the `links` category (by default).
 
 For me, it reduces the friction of adding a new link to my [linkblog](http://minglis.id.au/links/index.html) to a single command with no repetition.
+
+
+## Installing
+
+To get these executable files on your PATH (assuming `~/.local/bin` is on your PATH), you might do something like:
+
+```
+$ cd ~/.local/bin
+$ for s in ~/projects/jekyll-scripts/{jekyll-*,title-from-url}; do ln -s "$s"; done
+```
 
 
 ## Help
